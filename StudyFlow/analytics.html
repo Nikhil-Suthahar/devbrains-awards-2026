@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+  // Apply saved theme immediately (before CSS paints) to avoid a light/dark flash.
+  (function () {
+    try {
+      var raw = localStorage.getItem('sf_settings');
+      var settings = raw ? JSON.parse(raw) : null;
+      var mode = (settings && settings.appearance) || 'light';
+      var effective = mode;
+      if (mode === 'system') {
+        effective = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', effective);
+    } catch (e) { /* localStorage unavailable — default light theme applies */ }
+  })();
+</script>
+<title>Study Analytics — StudyFlow</title>
+<link rel="icon" href="assets/images/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="analytics" data-title="Study Analytics">
+
+<div class="sf-sidebar-backdrop"></div>
+<div class="app-shell">
+  <aside class="sf-sidebar" data-sf-sidebar-slot></aside>
+
+  <div class="sf-main">
+    <header class="sf-header" data-sf-header-slot></header>
+
+    <main class="sf-content">
+
+      <!-- Summary stats -->
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+          <div class="sf-card sf-card-hover sf-stat-card sf-slide-up sf-delay-1">
+            <div class="sf-stat-icon" style="background:var(--sf-lavender-100);color:var(--sf-primary)"><i class="bi bi-clock-history"></i></div>
+            <div class="sf-stat-value" id="ana-studyTime">0h</div>
+            <div class="sf-stat-label">Study Time This Month</div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="sf-card sf-card-hover sf-stat-card sf-slide-up sf-delay-2">
+            <div class="sf-stat-icon" style="background:rgba(34,197,94,.12);color:var(--sf-success)"><i class="bi bi-check2-circle"></i></div>
+            <div class="sf-stat-value" id="ana-completion">0%</div>
+            <div class="sf-stat-label">Completion Rate</div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="sf-card sf-card-hover sf-stat-card sf-slide-up sf-delay-3">
+            <div class="sf-stat-icon" style="background:rgba(59,130,246,.12);color:var(--sf-info)"><i class="bi bi-speedometer2"></i></div>
+            <div class="sf-stat-value" id="ana-productivity">0%</div>
+            <div class="sf-stat-label">Avg. Daily Productivity</div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="sf-card sf-card-hover sf-stat-card sf-slide-up sf-delay-4">
+            <div class="sf-stat-icon" style="background:rgba(245,158,11,.14);color:var(--sf-warning)"><i class="bi bi-fire"></i></div>
+            <div class="sf-stat-value" id="ana-streak">0 days</div>
+            <div class="sf-stat-label">Current Streak</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-lg-6">
+          <div class="sf-card sf-slide-up">
+            <div class="sf-card-body">
+              <h3 class="h6 mb-3">Weekly Study Hours</h3>
+              <canvas id="chartWeekly" height="200"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="sf-card sf-slide-up">
+            <div class="sf-card-body">
+              <h3 class="h6 mb-3">Monthly Task Completion</h3>
+              <canvas id="chartCompletion" height="200"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-lg-6">
+          <div class="sf-card sf-slide-up">
+            <div class="sf-card-body">
+              <h3 class="h6 mb-3">Subject-wise Study Time</h3>
+              <canvas id="chartSubjects" height="220"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="sf-card sf-slide-up">
+            <div class="sf-card-body">
+              <h3 class="h6 mb-3">Productivity Trend</h3>
+              <canvas id="chartTrend" height="220"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-lg-6">
+          <div class="sf-card sf-slide-up h-100">
+            <div class="sf-card-body">
+              <h3 class="h6 mb-3"><i class="bi bi-trophy text-success me-2"></i>Your Strongest Subjects</h3>
+              <div id="strongSubjects"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="sf-card sf-slide-up h-100">
+            <div class="sf-card-body">
+              <h3 class="h6 mb-3"><i class="bi bi-exclamation-circle text-warning me-2"></i>Subjects That Need More Attention</h3>
+              <div id="weakSubjects"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <footer class="sf-footer" data-sf-footer-slot></footer>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="js/script.js"></script>
+<script src="js/analytics.js"></script>
+</body>
+</html>
